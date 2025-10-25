@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Halaman Utama - Lapor! Bandar Lampung{% endblock %}
+
+{% block content %}
+<section id="hero" class="section">
+    <div class="container py-5 text-center">
+        <h1 class="display-4 fw-bold mb-3">Sampaikan Aspirasi dan Aduan Anda</h1>
+        <p class="lead mb-5">
+            Layanan Pengaduan Masyarakat Kota Bandar Lampung. Kami siap mendengarkan laporan Anda terkait <br class="d-none d-md-inline" />
+            infrastruktur, pelayanan publik, atau masalah lainnya.
+        </p>
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+            <a href="{{ url_for('public_routes.buat_laporan') }}" class="btn btn-lg btn-success px-4 me-sm-3">
+                <i class="bi bi-send-fill me-2"></i> Buat Laporan Sekarang
+            </a>
+            <button type="button" class="btn btn-lg btn-outline-light px-4" data-bs-toggle="modal" data-bs-target="#lacakModal">
+                <i class="bi bi-geo-alt-fill me-2"></i> Lacak Laporan
+            </button>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="lacakModal" tabindex="-1" aria-labelledby="lacakModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lacakModalLabel"><i class="bi bi-search me-2"></i> Lacak Laporan/Keluhan Anda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('public_routes.lacak_laporan') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nomor_laporan" class="form-label">Nomor Laporan/Keluhan</label>
+                        <input type="text" class="form-control" id="nomor_laporan" name="nomor_laporan" placeholder="Masukkan LP-XXXXX atau KL-XXXXX" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-primary">Lacak Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<section id="latest-laporan" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4 fw-bold" style="color: var(--secondary-blue)">Laporan Terbaru Warga</h2>
+        
+        {% if latest_laporan %}
+        <div id="laporanCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                {% for laporan in latest_laporan|batch(4) %}
+                <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 px-5 px-lg-0">
+                        {% for item in laporan %}
+                        <div class="col">
+                            <div class="card laporan-card h-100 shadow-sm border-0">
+                                {% if item.foto_path %}
+                                <img src="{{ url_for('static', filename='uploads/laporan_foto/' + item.foto_path) }}" class="card-img-top" alt="Foto Laporan" style="height: 150px; object-fit: cover" />
+                                {% else %}
+                                <img src="{{ url_for('static', filename='img/placeholder.jpg') }}" class="card-img-top" alt="Tidak Ada Foto" style="height: 150px; object-fit: cover" />
+                                {% endif %}
+                                <div class="card-body">
+                                    <h6 class="card-title fw-bold text-truncate">{{ item.nama_kategori }}</h6>
+                                    <p class="card-subtitle mb-2 text-muted small">{{ item.nomor_laporan }} - {{ item.tgl_lapor.strftime('%d/%m/%Y') }}</p>
+                                    <p class="card-text">{{ item.deskripsi }}</p>
+                                </div>
+                                <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
+                                    <span class="badge 
+                                        {% if item.status == 'Selesai' %}text-bg-success
+                                        {% elif item.status == 'Diproses' %}text-bg-warning
+                                        {% else %}text-bg-secondary
+                                        {% endif %}">
+                                        {{ item.status }}
+                                    </span>
+                                    <a href="#" class="btn btn-sm btn-primary">Lihat Detail</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if latest_laporan|length > 4 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#laporanCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(30%) sepia(100%) saturate(2000%) hue-rotate(200deg) brightness(80%) contrast(100%);"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#laporanCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(30%) sepia(100%) saturate(2000%) hue-rotate(200deg) brightness(80%) contrast(100%);"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center mt-5 mb-5">
+            <i class="bi bi-info-circle me-2"></i> Belum ada laporan terbaru yang ditampilkan.
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-5">
+            <a href="{{ url_for('public_routes.statistik') }}" class="btn btn-outline-secondary btn-lg">Lihat Semua Laporan dan Statistik <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+
+<hr class="my-5" />
+
+<section id="map-section" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4 fw-bold" style="color: var(--secondary-blue)">Peta Sebaran Laporan</h2>
+        <p class="text-center text-muted mb-4">Lihat lokasi laporan yang telah terverifikasi dan ditangani oleh Pemkot Bandar Lampung.</p>
+        
+        <div id="laporan-map" style="height: 500px; border-radius: 0.5rem; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);"></div>
+        
+        {% if not all_laporan_list %}
+        <div class="alert alert-warning text-center mt-3">
+            <i class="bi bi-map me-2"></i> Data koordinat laporan belum tersedia untuk ditampilkan di peta.
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<hr class="my-5" />
+
+<section id="latest-pengumuman" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4 fw-bold" style="color: var(--secondary-blue)">Informasi & Pengumuman Resmi</h2>
+        
+        {% if latest_pengumuman %}
+        <div id="pengumumanCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                {% for item in latest_pengumuman %}
+                <button type="button" data-bs-target="#pengumumanCarousel" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.index == 1 %}active{% endif %}" aria-current="true" aria-label="Slide {{ loop.index }}"></button>
+                {% endfor %}
+            </div>
+            <div class="carousel-inner">
+                {% for item in latest_pengumuman %}
+                <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                    <div class="card p-4 mx-auto shadow" style="max-width: 800px; background-color: white;">
+                        <h5 class="card-title fw-bold text-center" style="color: var(--accent-green);">{{ item.judul }}</h5>
+                        <p class="text-muted text-center small mb-3">Dipublikasikan: {{ item.tgl_publikasi.strftime('%d %B %Y') }}</p>
+                        <p class="card-text text-center">{{ item.isi_pengumuman }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#pengumumanCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: invert(30%) sepia(100%) saturate(2000%) hue-rotate(200deg) brightness(80%) contrast(100%);"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#pengumumanCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true" style="filter: invert(30%) sepia(100%) saturate(2000%) hue-rotate(200deg) brightness(80%) contrast(100%);"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center mt-5">
+            <i class="bi bi-megaphone me-2"></i> Belum ada pengumuman resmi terbaru.
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Data Peta dari Flask
+    const mapConfig = {{ map_config | tojson }};
+    const laporanData = {{ all_laporan_list | tojson }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Hanya inisialisasi peta jika elemen peta ada
+        const mapElement = document.getElementById('laporan-map');
+        if (mapElement) {
+            
+            // Inisialisasi Peta Leaflet
+            const map = L.map('laporan-map').setView([mapConfig.DEFAULT_LAT, mapConfig.DEFAULT_LONG], mapConfig.DEFAULT_ZOOM);
+
+            L.tileLayer(mapConfig.TILE_URL, {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            if (laporanData && laporanData.length > 0) {
+                laporanData.forEach(laporan => {
+                    if (laporan.lat_peta && laporan.long_peta) {
+                        let markerColor = 'blue';
+                        if (laporan.status === 'Selesai') {
+                            markerColor = 'green';
+                        } else if (laporan.status === 'Diproses') {
+                            markerColor = 'orange';
+                        }
+                        
+                        // Custom Icon (memerlukan CSS atau plugin tambahan, tapi kita gunakan default untuk saat ini)
+                        // L.marker([laporan.lat_peta, laporan.long_peta]).addTo(map)
+                        
+                        // Marker sederhana
+                        L.circleMarker([laporan.lat_peta, laporan.long_peta], {
+                            radius: 8,
+                            color: 'white',
+                            weight: 2,
+                            fillColor: markerColor,
+                            fillOpacity: 0.8
+                        }).addTo(map)
+                        .bindPopup(`
+                            <strong>${laporan.nama_kategori}</strong>
+                            <br>No. Laporan: ${laporan.nomor_laporan}
+                            <br>Status: <span style="font-weight: bold; color: ${markerColor};">${laporan.status}</span>
+                            <br>Lokasi: ${laporan.nama_jalan}
+                            <br><a href="#" class="btn btn-sm btn-link p-0 mt-1">Lihat Detail</a>
+                        `);
+                    }
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}

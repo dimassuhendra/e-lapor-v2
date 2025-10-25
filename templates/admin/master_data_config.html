@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Kelola Data Master{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>🛠️ Kelola Data Master Sistem E-Lapor</h2>
+        <p class="text-muted">Kelola Kategori, Dinas Terkait, dan Data Lokasi (Kecamatan/Kelurahan) di sini.</p>
+        <hr>
+        
+        <ul class="nav nav-tabs mb-4" id="masterTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="kategori-tab" data-bs-toggle="tab" data-bs-target="#kategori" type="button" role="tab" aria-controls="kategori" aria-selected="true">Kategori</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="dinas-tab" data-bs-toggle="tab" data-bs-target="#dinas" type="button" role="tab" aria-controls="dinas" aria-selected="false">Dinas Terkait</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="lokasi-tab" data-bs-toggle="tab" data-bs-target="#lokasi" type="button" role="tab" aria-controls="lokasi" aria-selected="false">Lokasi (Kecamatan/Kelurahan)</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="masterTabsContent">
+            
+            <div class="tab-pane fade show active" id="kategori" role="tabpanel" aria-labelledby="kategori-tab">
+                <h3>Tambah Kategori Baru</h3>
+                <form method="POST" action="{{ url_for('admin_config.add_kategori') }}" class="row g-3 mb-4 card p-3">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" name="nama_kategori" placeholder="Nama Kategori (Contoh: Jalan Rusak)" required>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" name="tipe_kategori" required>
+                            <option value="" disabled selected>Pilih Tipe</option>
+                            <option value="LAPORAN">LAPORAN</option>
+                            <option value="KELUHAN">KELUHAN</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">Tambah Kategori</button>
+                    </div>
+                </form>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Daftar Kategori LAPORAN</h4>
+                        <ul class="list-group">
+                            {% for kat in kategori_lap %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ kat.nama_kategori }} (ID: {{ kat.id_kategori }})
+                                <form method="POST" action="{{ url_for('admin_config.delete_kategori', id_kategori=kat.id_kategori) }}" onsubmit="return confirm('Yakin ingin menghapus kategori ini?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h4>Daftar Kategori KELUHAN</h4>
+                         <ul class="list-group">
+                            {% for kat in kategori_kel %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ kat.nama_kategori }} (ID: {{ kat.id_kategori }})
+                                <form method="POST" action="{{ url_for('admin_config.delete_kategori', id_kategori=kat.id_kategori) }}" onsubmit="return confirm('Yakin ingin menghapus kategori ini?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-pane fade" id="dinas" role="tabpanel" aria-labelledby="dinas-tab">
+                <h3>Kelola Dinas Terkait</h3>
+                <p>Implementasikan form dan tabel untuk `m_dinas` di sini.</p>
+                
+                {% comment %} Contoh data: {{ dinas }} {% endcomment %}
+            </div>
+
+            <div class="tab-pane fade" id="lokasi" role="tabpanel" aria-labelledby="lokasi-tab">
+                <h3>Kelola Lokasi (Kecamatan & Kelurahan)</h3>
+                <p>Implementasikan form dan tabel untuk `m_kecamatan` dan `m_kelurahan` di sini.</p>
+                
+                {% comment %} Contoh data: {{ kecamatan }}, {{ kelurahan_by_kec }} {% endcomment %}
+            </div>
+            
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
