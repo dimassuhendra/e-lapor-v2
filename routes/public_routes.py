@@ -36,83 +36,124 @@ def index():
                            latest_pengumuman=latest_pengumuman,
                            map_config=map_config)
 
-# --- B. Membuat Laporan ---
-@public_routes.route('/buat-laporan', methods=['GET', 'POST'])
-def buat_laporan():
-    kecamatan = master_data_model.get_all_kecamatan()
-    kategori_laporan = master_data_model.get_all_kategori(tipe='LAPORAN')
-    map_config = get_map_config()
+# # --- B. Membuat Laporan ---
+# @public_routes.route('/buat_laporan', methods=['GET', 'POST'])
+# def buat_laporan():
+#     kecamatan = master_data_model.get_all_kecamatan()
+#     kategori_laporan = master_data_model.get_all_kategori(tipe='LAPORAN')
+#     map_config = get_map_config()
     
-    if request.method == 'POST':
-        # 1. Validasi File Foto
-        if 'foto' not in request.files:
-            flash('Foto laporan wajib diunggah.', 'danger')
-            return redirect(request.url)
+#     if request.method == 'POST':
+#         # 1. Validasi File Foto
+#         if 'foto' not in request.files:
+#             flash('Foto laporan wajib diunggah.', 'danger')
+#             return redirect(request.url)
         
-        file = request.files['foto']
-        if file.filename == '':
-            flash('Foto laporan wajib diunggah.', 'danger')
-            return redirect(request.url)
+#         file = request.files['foto']
+#         if file.filename == '':
+#             flash('Foto laporan wajib diunggah.', 'danger')
+#             return redirect(request.url)
             
-        if not allowed_file(file.filename):
-            flash('Format file tidak diizinkan. Gunakan PNG, JPG, atau JPEG.', 'danger')
-            return redirect(request.url)
+#         if not allowed_file(file.filename):
+#             flash('Format file tidak diizinkan. Gunakan PNG, JPG, atau JPEG.', 'danger')
+#             return redirect(request.url)
 
-        filename = secure_filename(file.filename)
-        # Buat path folder jika belum ada
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+#         filename = secure_filename(file.filename)
+#         # Buat path folder jika belum ada
+#         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+#         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#         file.save(file_path)
         
-        # 2. Siapkan Data Laporan
-        data = {
-            'nama_pelapor': request.form.get('nama_pelapor'),
-            'no_whatsapp': request.form.get('no_whatsapp'),
-            'id_kategori': request.form.get('id_kategori'),
-            'nama_jalan': request.form.get('nama_jalan'),
-            'id_kecamatan': request.form.get('id_kecamatan'),
-            'id_kelurahan': request.form.get('id_kelurahan'),
-            'lat_peta': request.form.get('lat_peta'), # Koordinat dari klik peta/input tersembunyi
-            'long_peta': request.form.get('long_peta'),
-            'deskripsi': request.form.get('deskripsi')
-        }
+#         # 2. Siapkan Data Laporan
+#         data = {
+#             'nama_pelapor': request.form.get('nama_pelapor'),
+#             'no_whatsapp': request.form.get('no_whatsapp'),
+#             'id_kategori': request.form.get('id_kategori'),
+#             'nama_jalan': request.form.get('nama_jalan'),
+#             'id_kecamatan': request.form.get('id_kecamatan'),
+#             'id_kelurahan': request.form.get('id_kelurahan'),
+#             'lat_peta': request.form.get('lat_peta'), # Koordinat dari klik peta/input tersembunyi
+#             'long_peta': request.form.get('long_peta'),
+#             'deskripsi': request.form.get('deskripsi')
+#         }
 
-        # 3. Simpan ke Database
-        nomor, error = laporan_model.insert_laporan(data, file_path)
+#         # 3. Simpan ke Database
+#         nomor, error = laporan_model.insert_laporan(data, file_path)
         
-        if error:
-            flash(f'Gagal membuat laporan: {error}', 'danger')
-        else:
-            flash(f'Laporan Anda berhasil dibuat! Nomor Laporan Anda adalah: {nomor}. Gunakan nomor ini untuk melacak status.', 'success')
-            return redirect(url_for('public_routes.lacak_laporan')) # Redirect ke halaman pelacakan
+#         if error:
+#             flash(f'Gagal membuat laporan: {error}', 'danger')
+#         else:
+#             flash(f'Laporan Anda berhasil dibuat! Nomor Laporan Anda adalah: {nomor}. Gunakan nomor ini untuk melacak status.', 'success')
+#             return redirect(url_for('public_routes.lacak_laporan')) # Redirect ke halaman pelacakan
             
-    return render_template('public/buat_laporan.html', 
-                           kecamatan=kecamatan, 
-                           kategori=kategori_laporan, 
-                           map_config=map_config)
+#     return render_template('public/form_lapor.html', 
+#                            kecamatan=kecamatan, 
+#                            kategori=kategori_laporan, 
+#                            map_config=map_config)
 
-# --- C. Membuat Keluhan ---
-@public_routes.route('/buat-keluhan', methods=['GET', 'POST'])
-def buat_keluhan():
-    kategori_keluhan = master_data_model.get_all_kategori(tipe='KELUHAN')
+# --- B. Halaman Form Lapor/Keluhan (Route Gabungan) ---
+@public_routes.route('/lapor', methods=['GET', 'POST'])
+def lapor():
+    """Menampilkan halaman form Laporan dan Keluhan (Public) dan memproses POST."""
     
+    # Ambil data master untuk dropdown
+    kategori_laporan = master_data_model.get_all_kategori_laporan()
+    jenis_keluhan = master_data_model.get_all_jenis_keluhan()
+    data_kecamatan = master_data_model.get_all_kecamatan() 
+    
+    # --- Penanganan POST (Simpan Data) ---
     if request.method == 'POST':
-        data = {
-            'nama_pelapor': request.form.get('nama_pelapor'), # Opsional
-            'no_whatsapp': request.form.get('no_whatsapp'), # Opsional
-            'id_kategori': request.form.get('id_kategori'),
-            'deskripsi': request.form.get('deskripsi')
-        }
+        form_type = request.form.get('form_type')
+        data = request.form
         
-        nomor, error = laporan_model.insert_keluhan(data)
-        
-        if error:
-            flash(f'Gagal membuat keluhan: {error}', 'danger')
-        else:
-            flash(f'Keluhan Anda berhasil dibuat! Nomor Keluhan Anda adalah: {nomor}.', 'success')
-            return redirect(url_for('public_routes.lacak_laporan'))
+        if form_type == 'laporan':
+            # 1. Validasi dan Handle File Upload
+            foto = request.files.get('foto')
+            filename = None
+
+            # Logic: Laporan wajib menyertakan foto
+            if not foto or foto.filename == '':
+                flash('Foto laporan wajib diunggah untuk pengajuan Laporan.', 'danger')
+                return redirect(url_for('public_routes.lapor')) 
+                
+            if not allowed_file(foto.filename):
+                flash('Format file tidak diizinkan. Gunakan PNG, JPG, atau JPEG.', 'danger')
+                return redirect(url_for('public_routes.lapor'))
+
+            # Simpan file
+            filename = secure_filename(foto.filename)
+            # Opsional: Tambahkan unique ID/timestamp ke filename untuk menghindari konflik
+            filename = f"{os.urandom(8).hex()}_{filename}" 
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            foto.save(file_path)
             
-    return render_template('public/buat_keluhan.html', kategori=kategori_keluhan)
+            # 2. Insert ke model
+            nomor, error = laporan_model.insert_laporan(data, filename) 
+            
+            if nomor:
+                flash(f'Laporan Anda berhasil dikirim! Nomor Laporan: <strong>{nomor}</strong>.', 'success')
+                return redirect(url_for('public_routes.lacak_laporan', nomor_laporan=nomor))
+            else:
+                flash(f'Gagal mengirim laporan: {error}.', 'danger')
+                
+        elif form_type == 'keluhan':
+            # Keluhan tidak memerlukan upload file
+            nomor, error = laporan_model.insert_keluhan(data)
+            if nomor:
+                flash(f'Keluhan Anda berhasil dikirim! Nomor Keluhan: <strong>{nomor}</strong>.', 'success')
+                return redirect(url_for('public_routes.lacak_laporan', nomor_laporan=nomor))
+            else:
+                flash(f'Gagal mengirim keluhan: {error}.', 'danger')
+
+        # Jika POST gagal, kembalikan ke GET (dapat ditambahkan logic agar form terisi kembali)
+        flash('Terjadi kesalahan saat pemrosesan formulir. Silakan coba lagi.', 'danger')
+    
+    # --- Tampilan GET ---
+    return render_template('public/buat_laporan_keluhan.html', # <-- Nama template yang konsisten
+                           kategori_laporan=kategori_laporan,
+                           jenis_keluhan=jenis_keluhan,
+                           data_kecamatan=data_kecamatan)
 
 # --- D. Melacak Laporan (Gabungan Laporan & Keluhan) ---
 @public_routes.route('/lacak-laporan', methods=['GET', 'POST'])

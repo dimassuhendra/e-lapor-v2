@@ -93,6 +93,16 @@ def get_all_kategori(tipe=None):
         return get_all_data('m_kategori', 'tipe', tipe)
     return get_all_data('m_kategori')
 
+def get_all_kategori_laporan():
+    """Mengambil kategori khusus Laporan (tipe='LAPORAN')."""
+    # Panggil fungsi umum dengan filter
+    return get_all_kategori(tipe='LAPORAN')
+
+def get_all_jenis_keluhan():
+    """Mengambil kategori khusus Keluhan/Pertanyaan (tipe='KELUHAN')."""
+    # Panggil fungsi umum dengan filter
+    return get_all_kategori(tipe='KELUHAN')
+
 def add_kategori(nama, tipe):
     """Menambahkan kategori baru (tipe LAPORAN atau KELUHAN)."""
     conn, cursor = get_db_cursor()
